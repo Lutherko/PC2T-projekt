@@ -1,13 +1,16 @@
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Scanner;
 
 // Press ⇧ twice to open the Search Everywhere dialog and type `show whitespaces`,
 // then press Enter. You can now see whitespace characters in your code.
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, SQLException {
         int select;
         Scanner sc = new Scanner(System.in);
         ListOfFilms list = new ListOfFilms();
+
+        DbContext.LoadFromDb(list);
 
 
         while (true) {
@@ -29,7 +32,6 @@ public class Main {
 
             switch (select) {
                 case 1:
-
                     list.addFilm();
 
                     break;
@@ -88,6 +90,7 @@ public class Main {
 
                     break;
                 case 11:
+                    DbContext.SaveToDb();
 
                     break;
             }

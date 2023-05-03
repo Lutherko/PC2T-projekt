@@ -10,6 +10,18 @@ public class Rating {
         return stars;
     }
 
+    public void setStars(int stars){
+        this.stars = stars;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment){
+        this.comment= comment;
+    }
+
     public void setStarsFeaturedFilm(int stars) throws Exception {
         if (stars >= 1 && stars <= 5)
             this.stars = stars;

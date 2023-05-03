@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -19,9 +21,25 @@ public class ListOfFilms {
         return filmMap.get(filmName);
     }
 
-    public void addRating(String filmName, Rating rating){
+    public void addRating(String filmName, Rating rating) {
+        filmMap.get(filmName).getRatings().add(rating);
+
+        String sql;
+        if (rating.getComment() == null){
+            sql = "INSERT INTO ratings (title, stars, comment) " +
+                    "VALUES ('" + filmName + "', " + rating.getStars() + ", NULL)";
+        } else {
+            sql = "INSERT INTO ratings (title, stars, comment) " +
+                    "VALUES ('" + filmName + "', " + rating.getStars() + ", '" + rating.getComment() + "')";
+        }
+        DbContext.sqlQuaries.add(sql);
+    }
+
+    public void addRatingFromDb(String filmName, Rating rating) {
         filmMap.get(filmName).getRatings().add(rating);
     }
+
+
 
     public void addFilm(){
 
@@ -46,8 +64,11 @@ public class ListOfFilms {
             System.out.println("Enter list of actors (separated by commas): ");
             String actors = input.nextLine();
             String[] actorsArray = actors.split(",");
+            DbContext.sqlQuaries.add("INSERT INTO basicinfo VALUES ('" + title + "', '" + director + "', '" + releaseYear + "', NULL, '" + movieType + "')");
             for (String actor : actorsArray) {
                 actorsOrAnimators.add(actor.trim());
+                DbContext.sqlQuaries.add("INSERT INTO actors VALUES ('" + actor.trim() +"')");
+                DbContext.sqlQuaries.add("INSERT INTO filmactors VALUES ('"+ title + "', '" + actor.trim() +"')");
             }
         } else if (movieType == 2) {
             System.out.println("Enter recommended age for the viewer: ");
@@ -55,6 +76,28 @@ public class ListOfFilms {
             input.nextLine();
             System.out.println("Enter list of animators (separated by commas): ");
             String animators = input.nextLine();
+            String[] animatorsArray = animators.split(",");
+            DbContext.sqlQuaries.add("INSERT INTO basicinfo VALUES ('" + title + "', '" + director + "', '" + releaseYear + "', '" + recommendedAge + "', '" + movieType + "')");
+            for (String animator : animatorsArray) {
+                actorsOrAnimators.add(animator.trim());
+                DbContext.sqlQuaries.add("INSERT INTO aimators VALUES ('" + animator.trim() +"')");
+                DbContext.sqlQuaries.add("INSERT INTO filmanimators VALUES ('"+ title + "', '" + animator.trim() +"')");
+            }
+            filmMap.put(title ,new AnimatedFilm(title, director, releaseYear, actorsOrAnimators, recommendedAge));
+            return;
+        }
+
+        filmMap.put(title, new FeatureFilm(title, director, releaseYear, actorsOrAnimators));
+    }
+
+    public void addFilmFromDb(int movieType, String title, String director, int releaseYear, int recommendedAge, String actors, String animators){
+        ArrayList<String> actorsOrAnimators = new ArrayList<String>();
+        if (movieType == 1) {
+            String[] actorsArray = actors.split(",");
+            for (String actor : actorsArray) {
+                actorsOrAnimators.add(actor.trim());
+            }
+        } else if (movieType == 2) {
             String[] animatorsArray = animators.split(",");
             for (String animator : animatorsArray) {
                 actorsOrAnimators.add(animator.trim());
@@ -65,6 +108,7 @@ public class ListOfFilms {
 
         filmMap.put(title, new FeatureFilm(title, director, releaseYear, actorsOrAnimators));
     }
+
     public  void  editFilm() {
         Scanner input = new Scanner(System.in);
         System.out.println("Enter film title to edit: ");
@@ -123,7 +167,7 @@ public class ListOfFilms {
     }
 
 
-    public void deleteFilm() {
+    public void deleteFilm() throws SQLException {
         Scanner input = new Scanner(System.in);
 
         System.out.println("Enter movie title to delete: ");
@@ -132,10 +176,15 @@ public class ListOfFilms {
         if (filmMap.containsKey(titleToDelete)) {
             filmMap.remove(titleToDelete);
             System.out.println("Movie deleted.");
+
+            DbContext.sqlQuaries.add("DELETE FROM `basicinfo` WHERE `Title` = '" + titleToDelete + "'");
+
         } else {
             System.out.println("Movie not found.");
         }
     }
+
+
 
 
     public  void displayFilms(){
@@ -183,7 +232,6 @@ public class ListOfFilms {
 
 
     public void filmSearch(String name){
-        filmMap.get(name).filmInfo();
         if(filmMap.get(name) != null)
             filmMap.get(name).filmInfo();
         else
